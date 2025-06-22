@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke('config:set-channel-nickname', channelId, nickname),
     removeChannelNickname: (channelId: string) =>
       ipcRenderer.invoke('config:remove-channel-nickname', channelId),
-    getChannelList: () => ipcRenderer.invoke('config:get-channel-list')
+    getChannelList: () => ipcRenderer.invoke('config:get-channel-list'),
+    getMaxMessages: () => ipcRenderer.invoke('config:get-max-messages'),
+    setMaxMessages: (maxMessageNum: number) =>
+      ipcRenderer.invoke('config:set-max-messages', maxMessageNum)
   }
 })

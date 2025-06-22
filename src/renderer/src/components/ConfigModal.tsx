@@ -18,10 +18,13 @@ export default function ConfigModal({
   const [newChannelId, setNewChannelId] = useState('')
   const [newNickname, setNewNickname] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [maxMessages, setMaxMessages] = useState<number>(300)
+  const [tempMaxMessages, setTempMaxMessages] = useState<number>(300)
 
   useEffect(() => {
     if (isOpen) {
       loadChannels()
+      loadMaxMessages()
     }
   }, [isOpen])
 
@@ -31,6 +34,25 @@ export default function ConfigModal({
       setChannels(channelList)
     } catch (error) {
       console.error('Failed to load channels:', error)
+    }
+  }
+
+  const loadMaxMessages = async (): Promise<void> => {
+    try {
+      const maxMsgs = await window.electron.config.getMaxMessages()
+      setMaxMessages(maxMsgs)
+      setTempMaxMessages(maxMsgs)
+    } catch (error) {
+      console.error('Failed to load max messages:', error)
+    }
+  }
+
+  const handleSaveMaxMessages = async (): Promise<void> => {
+    try {
+      await window.electron.config.setMaxMessages(tempMaxMessages)
+      setMaxMessages(tempMaxMessages)
+    } catch (error) {
+      console.error('Failed to save max messages:', error)
     }
   }
 
@@ -82,6 +104,29 @@ export default function ConfigModal({
         </div>
 
         <div className="modal-body">
+          <div className="max-messages-section">
+            <h3>Message Limit</h3>
+            <div className="input-group">
+              <label>Maximum messages to keep in memory:</label>
+              <input
+                type="number"
+                min="10"
+                max="1000"
+                value={tempMaxMessages}
+                onChange={(e) => setTempMaxMessages(parseInt(e.target.value) || 300)}
+              />
+              <button
+                onClick={handleSaveMaxMessages}
+                disabled={tempMaxMessages === maxMessages}
+              >
+                Save
+              </button>
+            </div>
+            <p className="help-text">
+              Current: {maxMessages} messages. Higher values use more memory but keep more message history.
+            </p>
+          </div>
+
           <div className="add-channel-section">
             <h3>Add Channel</h3>
             <div className="input-group">

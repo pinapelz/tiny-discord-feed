@@ -8,19 +8,23 @@ function App(): React.JSX.Element {
   const [channelNicknames, setChannelNicknames] = useState<Record<string, string>>({})
   const [isConfigOpen, setIsConfigOpen] = useState(false)
   const [isMouseInWindow, setIsMouseInWindow] = useState(true)
+  const [maxMessages, setMaxMessages] = useState<number>(300)
 
-  // Load channel nicknames on mount
+  // Load channel nicknames and max messages on mount
   useEffect(() => {
-    const loadChannelNicknames = async (): Promise<void> => {
+    const loadConfig = async (): Promise<void> => {
       try {
         const nicknames = await window.electron.config.getChannelNicknames()
         setChannelNicknames(nicknames)
+
+        const maxMsgs = await window.electron.config.getMaxMessages()
+        setMaxMessages(maxMsgs)
       } catch (error) {
-        console.error('Failed to load channel nicknames:', error)
+        console.error('Failed to load config:', error)
       }
     }
 
-    loadChannelNicknames()
+    loadConfig()
   }, [])
 
   useEffect(() => {
@@ -33,7 +37,7 @@ function App(): React.JSX.Element {
           if (existingMessage) {
             return prev
           }
-          return [data, ...prev.slice(0, 300)]
+          return [data, ...prev.slice(0, maxMessages - 1)]
         })
       }
     }
@@ -125,8 +129,9 @@ function App(): React.JSX.Element {
         isOpen={isConfigOpen}
         onClose={() => {
           setIsConfigOpen(false)
-          // Reload channel nicknames after config changes
+          // Reload config after changes
           window.electron.config.getChannelNicknames().then(setChannelNicknames)
+          window.electron.config.getMaxMessages().then(setMaxMessages)
         }}
       />
     </div>

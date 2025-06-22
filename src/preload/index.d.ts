@@ -11,6 +11,8 @@ declare global {
         setChannelNickname: (channelId: string, nickname: string) => Promise<boolean>
         removeChannelNickname: (channelId: string) => Promise<boolean>
         getChannelList: () => Promise<Array<{ id: string; nickname: string }>>
+        getMaxMessages: () => Promise<number>
+        setMaxMessages: (maxMessageNum: number) => Promise<boolean>
       }
     }
   }

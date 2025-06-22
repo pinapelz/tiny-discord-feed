@@ -102,6 +102,17 @@ function setupIpcHandlers(): void {
     return true
   })
 
+  // Get max messages
+  ipcMain.handle('config:get-max-messages', () => {
+    return store.get('maxMessages', 300) // Default to 100 if not set
+  })
+
+  // Set max messages
+  ipcMain.handle('config:set-max-messages', (_, maxMessagesKept: number) => {
+    store.set('maxMessages', maxMessagesKept)
+    return true
+  })
+
   // Get all channel nicknames as array
   ipcMain.handle('config:get-channel-list', () => {
     const nicknames = store.get('channelNicknames')
