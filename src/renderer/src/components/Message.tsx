@@ -34,7 +34,9 @@ const parseMentionsAndEmotes = (
   }
 
   parsedContent = parsedContent.replace(/<@!?(\d+)>/g, '<span class="mention">@unknown</span>')
-
+  // Roles are a placeholder for now cause can't find a good way to get the names of them
+  parsedContent = parsedContent.replace(/<@&?(\d+)>/g, '<span class="mention">@RoleMention</span>')
+  parsedContent = parsedContent.replace(/@everyone/g, '<span class="mention">@everyone</span>')
   // Replace Discord emote syntax <:name:id> and <a:name:id> with img tags FIRST
   parsedContent = parsedContent.replace(/<(a?):([^:]+):(\d+)>/g, (_, animated, name, id) => {
     // Validate that we have a proper ID
