@@ -13,14 +13,16 @@ const avatarBaseUrl = 'https://cdn.discordapp.com/avatars/'
 interface ParsedContent {
   html: string
   imageUrls: string[]
+  videoUrls: string[]
 }
 
-const parseMentionsAndEmotes = (
+const processRenderedContent = (
   content: string,
   mentions?: DiscordUserMention[]
 ): ParsedContent => {
   let parsedContent = content
   const imageUrls: string[] = []
+  const videoUrls: string[] = []
 
   // Replace user mentions <@user_id> with usernames
   if (mentions && mentions.length > 0) {
@@ -80,6 +82,11 @@ const parseMentionsAndEmotes = (
   parsedContent = parsedContent.replace(urlRegex, (url) => {
     // Check if URL ends with image extension
     const imageExtensions = /\.(png|jpe?g|gif|webp)(\?[^\s]*)?$/i
+    const videoExtensions = /\.(mp4|webm|mov|avi|mkv|flv|wmv|m4v)(\?[^\s]*)?$/i
+    if (videoExtensions.test(url)) {
+      videoUrls.push(url)
+      return '' // Remove video URL from content
+    }
     if (imageExtensions.test(url)) {
       imageUrls.push(url)
       return '' // Remove image URL from content
@@ -92,11 +99,10 @@ const parseMentionsAndEmotes = (
     const placeholder = `__IMG_PLACEHOLDER_${index}__`
     parsedContent = parsedContent.replace(placeholder, imgTag)
   })
-
   // Convert newlines to HTML line breaks
   parsedContent = parsedContent.replace(/\n/g, '<br>')
 
-  return { html: parsedContent, imageUrls }
+  return { html: parsedContent, imageUrls, videoUrls }
 }
 
 const Message: React.FC<MessageProps> = ({ message, channelNickname }) => {
@@ -126,8 +132,12 @@ const Message: React.FC<MessageProps> = ({ message, channelNickname }) => {
   // Separate image and non-image attachments
   const imageAttachments =
     attachments?.filter((att) => att.content_type?.startsWith('image/')) || []
+  const videoAttachments =
+    attachments?.filter((att) => att.content_type?.startsWith('video/')) || []
   const nonImageAttachments =
-    attachments?.filter((att) => !att.content_type?.startsWith('image/')) || []
+    attachments?.filter(
+      (att) => !att.content_type?.startsWith('image/') && !att.content_type?.startsWith('video/')
+    ) || []
 
   const renderSticker = (): React.JSX.Element | null => {
     if (!sticker_id || sticker_type === undefined) return null
@@ -179,7 +189,7 @@ const Message: React.FC<MessageProps> = ({ message, channelNickname }) => {
           {(() => {
             if (!content) return null
 
-            const parsed = parseMentionsAndEmotes(content, mentions)
+            const parsed = processRenderedContent(content, mentions)
 
             return (
               <>
@@ -191,6 +201,26 @@ const Message: React.FC<MessageProps> = ({ message, channelNickname }) => {
                     <img
                       src={imageUrl}
                       alt="Content image"
+                      style={{
+                        maxWidth: '400px',
+                        maxHeight: '300px',
+                        borderRadius: '6px',
+                        marginTop: '8px',
+                        display: 'block'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                ))}
+
+                {/* Render extracted video URLs as React components */}
+                {parsed.videoUrls.map((videoUrl, index) => (
+                  <div key={index} className="attachment-container">
+                    <video
+                      src={videoUrl}
+                      controls
                       style={{
                         maxWidth: '400px',
                         maxHeight: '300px',
@@ -225,6 +255,27 @@ const Message: React.FC<MessageProps> = ({ message, channelNickname }) => {
                 }}
                 onError={(e) => {
                   console.error('Attachment image failed to load:', attachment.filename)
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            </div>
+          ))}
+
+          {/* Render all video attachments */}
+          {videoAttachments.map((attachment, index) => (
+            <div key={`video-${attachment.id || index}`} className="attachment-container">
+              <video
+                src={attachment.proxy_url || attachment.url}
+                controls
+                style={{
+                  maxWidth: '400px',
+                  maxHeight: '300px',
+                  borderRadius: '6px',
+                  marginTop: '8px',
+                  display: 'block'
+                }}
+                onError={(e) => {
+                  console.error('Attachment video failed to load:', attachment.filename)
                   e.currentTarget.style.display = 'none'
                 }}
               />
