@@ -10,6 +10,19 @@ interface MessageProps {
 const fallbackAvatar = 'https://cdn.discordapp.com/embed/avatars/0.png'
 const avatarBaseUrl = 'https://cdn.discordapp.com/avatars/'
 
+const hammerTimeToDateString = (hammerTime: string): string => {
+  const match = hammerTime.match(/<t:(\d+)(?::[tTdDfFR])?>/)
+  if (!match) {
+    return 'Unknown Timestamp'
+  }
+  const timestamp = parseInt(match[1], 10)
+  if (isNaN(timestamp)) {
+    return 'Unknown Timestamp'
+  }
+  const date = new Date(timestamp * 1000)
+  return date.toLocaleString()
+}
+
 interface ParsedContent {
   html: string
   imageUrls: string[]
@@ -39,6 +52,13 @@ const processRenderedContent = (
   // Roles are a placeholder for now cause can't find a good way to get the names of them
   parsedContent = parsedContent.replace(/<@&?(\d+)>/g, '<span class="mention">@RoleMention</span>')
   parsedContent = parsedContent.replace(/@everyone/g, '<span class="mention">@everyone</span>')
+  parsedContent = parsedContent.replace(/<t:\d+(?::[tTdDfFR])?>/g, (match) => {
+    return (
+      '<span class="hammertime-timestamp ">' +
+      hammerTimeToDateString(match) +
+      ' (your local time) </span>'
+    )
+  })
   // Replace Discord emote syntax <:name:id> and <a:name:id> with img tags FIRST
   parsedContent = parsedContent.replace(/<(a?):([^:]+):(\d+)>/g, (_, animated, name, id) => {
     // Validate that we have a proper ID

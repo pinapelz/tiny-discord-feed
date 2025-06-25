@@ -475,3 +475,36 @@ a:hover{ text-decoration:underline; }
   display: block;
   border-radius: var(--radius);
 }
+
+/* ================= Hammertime Timestamps ================= */
+.hammertime-timestamp {
+  margin-top: 2px;
+  background: var(--channel);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85em;
+  font-weight: 500;
+  display: inline-block;
+  cursor: help;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.hammertime-timestamp:hover {
+  background: var(--text-muted);
+  color: var(--background);
+  border-color: var(--accent-blue);
+}
+
+.hammertime-timestamp.relative {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.hammertime-timestamp.relative:hover {
+  opacity: 0.8;
+  background: var(--accent-blue);
+  color: white;
+}

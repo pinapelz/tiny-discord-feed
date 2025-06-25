@@ -46,7 +46,7 @@ function App(): React.JSX.Element {
     return () => {
       window.electron.ipcRenderer.removeListener('new-discord-message', listener)
     }
-  }, [])
+  }, [maxMessages])
 
   return (
     <div
