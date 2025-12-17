@@ -2,16 +2,18 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is, platform } from '@electron-toolkit/utils'
 import { WebSocketServer, WebSocket } from 'ws'
+
 import icon from '../../resources/icon.png?asset'
 
 let mainWindow: BrowserWindow
-let store: import('electron-store').default<{ channelNicknames: Record<string, string> }>
+let store: any
 
 async function initStore(): Promise<void> {
   const Store = (await import('electron-store')).default
   store = new Store({
     defaults: {
-      channelNicknames: {}
+      channelNicknames: {},
+      maxMessages: 300
     }
   })
 }
@@ -104,7 +106,7 @@ function setupIpcHandlers(): void {
 
   // Get max messages
   ipcMain.handle('config:get-max-messages', () => {
-    return store.get('maxMessages', 300) // Default to 100 if not set
+    return store.get('maxMessages', 300) // Default to 300 if not set
   })
 
   // Set max messages

@@ -10,7 +10,6 @@ function App(): React.JSX.Element {
   const [isMouseInWindow, setIsMouseInWindow] = useState(true)
   const [maxMessages, setMaxMessages] = useState<number>(300)
 
-  // Load channel nicknames and max messages on mount
   useEffect(() => {
     const loadConfig = async (): Promise<void> => {
       try {
@@ -28,16 +27,28 @@ function App(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    setMessages((prev) => {
+      const filteredMessages = prev.filter((msg) => channelNicknames[msg.channel])
+      return filteredMessages.slice(0, maxMessages)
+    })
+  }, [maxMessages, channelNicknames])
+
+  useEffect(() => {
     const listener = (...args: unknown[]): void => {
       const data = args[0] as DiscordMessage
 
       if (data) {
         setMessages((prev) => {
+          if (!channelNicknames[data.channel]) {
+            return prev
+          }
+
           const existingMessage = prev.find((msg) => msg.id === data.id)
           if (existingMessage) {
             return prev
           }
-          return [data, ...prev.slice(0, maxMessages - 1)]
+          const newMessages = [data, ...prev]
+          return newMessages.slice(0, maxMessages)
         })
       }
     }
@@ -46,7 +57,7 @@ function App(): React.JSX.Element {
     return () => {
       window.electron.ipcRenderer.removeListener('new-discord-message', listener)
     }
-  }, [maxMessages])
+  }, [maxMessages, channelNicknames])
 
   return (
     <div
@@ -90,18 +101,14 @@ function App(): React.JSX.Element {
             )
           }
 
-          // Filter messages from configured channels and limit to 30 displayed
-          const filteredMessages = messages
-            .filter((msg) => channelNicknames[msg.channel])
-            .filter(
-              (msg) =>
-                !(
-                  (msg.content === '' || msg.content === undefined) &&
-                  !msg.sticker_id &&
-                  (!msg.attachments || msg.attachments.length === 0)
-                )
-            )
-            .slice(0, 30)
+          const filteredMessages = messages.filter(
+            (msg) =>
+              !(
+                (msg.content === '' || msg.content === undefined) &&
+                !msg.sticker_id &&
+                (!msg.attachments || msg.attachments.length === 0)
+              )
+          )
 
           if (filteredMessages.length === 0) {
             return (
@@ -127,11 +134,16 @@ function App(): React.JSX.Element {
 
       <ConfigModal
         isOpen={isConfigOpen}
-        onClose={() => {
+        onClose={async () => {
           setIsConfigOpen(false)
           // Reload config after changes
-          window.electron.config.getChannelNicknames().then(setChannelNicknames)
-          window.electron.config.getMaxMessages().then(setMaxMessages)
+          const [newNicknames, newMaxMessages] = await Promise.all([
+            window.electron.config.getChannelNicknames(),
+            window.electron.config.getMaxMessages()
+          ])
+
+          setChannelNicknames(newNicknames)
+          setMaxMessages(newMaxMessages)
         }}
       />
     </div>
