@@ -271,7 +271,25 @@ const Message: React.FC<MessageProps> = ({ message, channelNickname }) => {
                   maxHeight: '300px',
                   borderRadius: '6px',
                   marginTop: '8px',
-                  display: 'block'
+                  display: 'block',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  const fullscreenImg = document.createElement('img')
+                  fullscreenImg.src = attachment.proxy_url || attachment.url
+                  fullscreenImg.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    object-fit: contain;
+                    background: rgba(0, 0, 0, 0.9);
+                    z-index: 9999;
+                    cursor: pointer;
+                  `
+                  fullscreenImg.onclick = () => document.body.removeChild(fullscreenImg)
+                  document.body.appendChild(fullscreenImg)
                 }}
                 onError={(e) => {
                   console.error('Attachment image failed to load:', attachment.filename)
